@@ -1,0 +1,775 @@
+{
+  "name": "Amarahasa",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        -240
+      ],
+      "id": "f325c6e2-fe49-4f00-a89d-fb3751fc1f4d",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://en.amarahasa.com/series/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        -240
+      ],
+      "id": "7f4ee08b-ba57-4a23-b991-fc58e411363e",
+      "name": "List Stories by Series",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "=https://en.amarahasa.com{{ $json.chapter_link }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 100
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        -80
+      ],
+      "id": "4bfa5e93-d330-402c-a2b3-765019fb23c2",
+      "name": "Download Chapter",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        -208
+      ],
+      "id": "8fbfa116-4837-4cde-8832-ff24cd462df2",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "sentences",
+              "cssSelector": "s-sent",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        -80
+      ],
+      "id": "59805610-611b-4233-9000-fa7c862d2ada",
+      "name": "Extract Chapter Content",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -144,
+        -224
+      ],
+      "id": "13bf5ab7-f90d-42cc-84e0-6b306636ea07",
+      "name": "Combine Book & Chapters"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "series_title",
+              "cssSelector": "h1:has(a) a",
+              "returnArray": true
+            },
+            {
+              "key": "series_link",
+              "cssSelector": "h1:has(a) a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {
+          "trimValues": false
+        }
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -1424,
+        -240
+      ],
+      "id": "e1d76bb0-eaab-464e-9f49-36879850fc54",
+      "name": "Enumerate Series"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "series_title,series_link",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        -240
+      ],
+      "id": "723e9b4f-d99e-461e-b914-ddd7fcb31f35",
+      "name": "Links and Titles"
+    },
+    {
+      "parameters": {
+        "url": "=https://en.amarahasa.com{{ $json.series_link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1072,
+        -240
+      ],
+      "id": "bdb6a93b-7828-4270-8442-ff2458e5cb2c",
+      "name": "Series Page",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "book_title, book_link, book_subtitle",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -240
+      ],
+      "id": "a11e60a6-5a9c-451a-9622-b7964ef12b32",
+      "name": "Split into Books"
+    },
+    {
+      "parameters": {
+        "url": "=https://en.amarahasa.com{{ $json.book_link}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        -80
+      ],
+      "id": "96658507-34d6-4fc6-b6fd-1647cc94575c",
+      "name": "Book Page"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "book_title",
+              "cssSelector": "li:has(a:has(div.flex)) h2",
+              "returnArray": true
+            },
+            {
+              "key": "book_link",
+              "cssSelector": "li:has(a:has(div.flex)) a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            },
+            {
+              "key": "book_subtitle",
+              "cssSelector": "li:has(a:has(div.flex)) p",
+              "returnArray": true
+            },
+            {
+              "key": "series",
+              "cssSelector": "h1"
+            }
+          ]
+        },
+        "options": {
+          "trimValues": false
+        }
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        -240
+      ],
+      "id": "b9b6ed49-bcea-40a5-a9a8-fc6b4ccbcf23",
+      "name": "Enumerate Books"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "chapter_link",
+              "cssSelector": "a.py-2",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            },
+            {
+              "key": "chapter_title",
+              "cssSelector": "a.py-2",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        -80
+      ],
+      "id": "ba010112-16be-4148-905e-f0bb6cb92486",
+      "name": "Enumerate Chapters"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "chapter_link, chapter_title",
+        "include": "allOtherFields",
+        "options": {
+          "destinationFieldName": ""
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -224
+      ],
+      "id": "57252e57-f7d6-4506-99f0-7a7f5fa2e3d1",
+      "name": "Split into Chapters"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n  <link href=\"https://fonts.googleapis.com/css2?family=Jaini+Purva&display=swap\" rel=\"stylesheet\">\n</head>\n<body>\n  <div class=\"container\">\n    {{ $json.concatenated_content }}\n  </div>\n</body>\n</html>\n<style>\n* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n  font-family: \"Jaini Purva\", system-ui;\n  font-style: normal;\n}\nbody {\n  background: linear-gradient(to bottom, #faf8f3 0%, #f5f1e8 100%);\n  padding: 30px 25px;\n  line-height: 1.4;\n  min-height: 100vh;\n}\n.container {\n  max-width: 800px;\n  margin: 0 auto;\n  background: #fffef9;\n  padding: 35px 45px;\n  border-radius: 2px;\n  box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n}\n.header {\n  border-bottom: 1px solid #d4c4a8;\n  padding-bottom: 12px;\n  margin-bottom: 20px;\n}\n.series-name {\n  font-size: 14px;\n  font-weight: 500;\n  text-transform: uppercase;\n  letter-spacing: 2px;\n  color: #8b7355;\n  margin-bottom: 6px;\n}\n.book-title {\n  font-size: 24px;\n  font-weight: 700;\n  margin-top: 8px;\n  margin-bottom: 4px;\n  color: #2c2416;\n}\n.book-subtitle {\n  font-family: Times New Roman;\n  font-size: 14px;\n  font-style: italic;\n  color: #6b5d4f;\n  margin-top: 4px;\n}\n.chapter-header {\n  margin-bottom: 24px;\n  text-align: center;\n}\n.chapter-title {\n  font-size: 28px;\n  font-weight: 700;\n  color: #2c2416;\n}\n.content {\n  margin-bottom: 10px;\n}\n.sentence {\n  display: flex;\n  margin-bottom: 14px;\n  page-break-inside: avoid;\n  padding: 4px 0;\n  transition: background 0.2s ease;\n}\n.sentence:hover {\n  background: rgba(212,196,168,0.08);\n  border-radius: 4px;\n}\n.sentence-number {\n  font-size: 14px;\n  font-weight: 500;\n  color: #a89074;\n  min-width: 28px;\n  margin-right: 16px;\n  text-align: right;\n  flex-shrink: 0;\n}\n.sentence-text {\n  font-size: 22px;\n  color: #2c2416;\n  line-height: 1.6;\n}\n@media print {\n  body {\n    padding: 15px;\n    background: white;\n  }\n  \n  .container {\n    max-width: 100%;\n    box-shadow: none;\n    padding: 25px 35px;\n  }\n  \n  .sentence {\n    margin-bottom: 12px;\n  }\n}\n@media (max-width: 768px) {\n  body {\n    padding: 20px;\n  }\n  .container {\n    padding: 25px 20px;\n  }\n  .sentence-text {\n    font-size: 20px;\n  }\n}\n</style>\n<script src=\"l\"></script>\n<script>\n// Transliterate all IAST text to Devanagari on page load\ndocument.addEventListener('DOMContentLoaded', function() {\n  const iastElements = document.querySelectorAll('.iast');\n  iastElements.forEach(function(element) {\n    const iastText = element.textContent;\n    const devanagariText = Sanscript.t(iastText, 'iast', 'devanagari');\n    element.textContent = devanagariText;\n  });\n});\n</script>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        -208
+      ],
+      "id": "5f580be6-66eb-4b79-a180-e8759137f8dd",
+      "name": "HTML",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const encoded = Buffer.from($json.html).toString('base64');\nreturn { encoded };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        -208
+      ],
+      "id": "15aa8b38-bcce-4a8d-a4c1-bc0c5ce34a77",
+      "name": "Encode b64"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "encoded",
+        "options": {
+          "fileName": "index.html",
+          "mimeType": "text/html"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        -208
+      ],
+      "id": "a768e02c-1fd8-4c36-a7d6-e0840bb1c0fe",
+      "name": "b64 to file"
+    },
+    {
+      "parameters": {
+        "jsCode": "const Sanscript = require('@indic-transliteration/sanscript');\nconst convert = (val) => Sanscript.t(val, \"iast\", \"devanagari\");\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.series = convert(item.json.series);\n  item.json.book_title = convert(item.json.book_title);\n  item.json.chapter_title = convert(item.json.chapter_title);\n\n  item.json.sentences = item.json.sentences.map((sentence) => convert(sentence));\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        -208
+      ],
+      "id": "f02d399c-00bf-4fec-b519-1731ca2cb548",
+      "name": "Sanscript"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1856,
+        16
+      ],
+      "id": "13536cf8-23ee-4c70-96e1-128e0f12fcb4",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "content"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "book_title,series",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        -208
+      ],
+      "id": "f9ed6f32-d3c2-45b5-b344-58cee04e4c7c",
+      "name": "Create Book Content"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "147a1b9c-e5f9-4a92-8fce-3061685b9aea",
+              "name": "content",
+              "value": "=<div class=\"header\">\n    <div class=\"series-name\">{{ $json.series }}</div>\n    {{ $if($json.chapter_link.includes(\"1/\"), `\n        <div class=\"book-title\">${$json.book_title}</div>\n        <div class=\"book-subtitle\">${$json.book_subtitle}</div>\n      `, '') }}\n</div>\n    \n<div class=\"chapter-header\">\n  <h1 class=\"chapter-title\">{{ $json.chapter_title }}</h1>\n</div>\n    \n<div class=\"content\">\n    {{ $json.sentences.map((sentence, index) => '<div class=\"sentence\"><span class=\"sentence-number\">' + (index + 1) + '</span><span class=\"sentence-text iast\">' + sentence + '</span></div>').join('') }}\n</div>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "except",
+        "excludeFields": "sentences",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        -208
+      ],
+      "id": "1869c364-2856-45de-b7c7-5e6380b24939",
+      "name": "HTML Sentence Content"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/{{ $json.series }} - {{ $json.book_title }}.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        16
+      ],
+      "id": "a73fa91c-be87-480d-9f2b-ed7c13868ad2",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4d5b509-80b5-4ecf-b45d-3facb5596338",
+              "name": "book_title",
+              "value": "={{ $json.book_title }}",
+              "type": "string"
+            },
+            {
+              "id": "a3c1fcbf-239b-4997-80b0-258d260b82de",
+              "name": "series",
+              "value": "={{ $json.series }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        32
+      ],
+      "id": "0c853e6d-5d99-40f4-866c-dece59c1cd24",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.181:3210/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1856,
+        -208
+      ],
+      "id": "fd207765-e294-4535-b56a-ed87951f9865",
+      "name": "Convert to PDF",
+      "retryOnFail": true
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {}
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "List Stories by Series",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Stories by Series": {
+      "main": [
+        [
+          {
+            "node": "Enumerate Series",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Chapter": {
+      "main": [
+        [
+          {
+            "node": "Extract Chapter Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Chapter Content": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine Book & Chapters": {
+      "main": [
+        [
+          {
+            "node": "Split into Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Sanscript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enumerate Series": {
+      "main": [
+        [
+          {
+            "node": "Links and Titles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Links and Titles": {
+      "main": [
+        [
+          {
+            "node": "Series Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Series Page": {
+      "main": [
+        [
+          {
+            "node": "Enumerate Books",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split into Books": {
+      "main": [
+        [
+          {
+            "node": "Book Page",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Combine Book & Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Page": {
+      "main": [
+        [
+          {
+            "node": "Enumerate Chapters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enumerate Books": {
+      "main": [
+        [
+          {
+            "node": "Split into Books",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enumerate Chapters": {
+      "main": [
+        [
+          {
+            "node": "Combine Book & Chapters",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Split into Chapters": {
+      "main": [
+        [
+          {
+            "node": "Download Chapter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Encode b64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Encode b64": {
+      "main": [
+        [
+          {
+            "node": "b64 to file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "b64 to file": {
+      "main": [
+        [
+          {
+            "node": "Convert to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanscript": {
+      "main": [
+        [
+          {
+            "node": "HTML Sentence Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Book Content": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Sentence Content": {
+      "main": [
+        [
+          {
+            "node": "Create Book Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Convert to PDF": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7873511a-dd29-417a-bf7f-e20e453ced67",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fb949dd70bb52ce260f0c37376179a476c7e42891505e00dde5e17013173739e"
+  },
+  "id": "06CE43nUyzM29UuO",
+  "tags": []
+}

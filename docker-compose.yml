@@ -1,0 +1,38 @@
+services:
+  n8n:
+    container_name: n8n
+    # This custom image is made by the Dockerfile
+    image: n8n-custom:latest
+    restart: unless-stopped
+    # Run `id` to check what you should put here
+    user: "1026:100"
+    environment:
+      - N8N_PORT=5678
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=America/New_York
+      - N8N_SECURE_COOKIE=false
+      # Build with sanscript
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      # The payload size needs to be bigger
+      - N8N_PAYLOAD_SIZE_MAX=26843545
+      - N8N_USER_FOLDER=/home/node
+    volumes:
+      - /mnt/docker/n8n/files:/files
+      - /mnt/docker/n8n/data:/home/node
+    ports:
+      - 5678:5678
+    networks:
+      - n8n
+
+  # For converting HTML to PDF
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    ports:
+      - "3210:3210"
+    environment:
+      - API_PORT=3210
+
+networks:
+  n8n:
+    driver: bridge
