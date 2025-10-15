@@ -1,4 +1,4 @@
-# Amarahasa
+# Webscraped Amarahasa
 
 This is not [Amarahasa](https://en.amarahasa.com/), but it is related.
 
